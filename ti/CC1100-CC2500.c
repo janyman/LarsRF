@@ -42,8 +42,9 @@
 //------------------------------------------------------------------------------
 
 
-#include "include.h"
 #include "TI_CC_CC1100-CC2500.h"
+#include "TI_CC_spi.h"
+#include "my_debug.h"
 
 #define TI_CC_RF_FREQ  868                 // 315, 433, 868, 915, 2400
 
@@ -455,6 +456,7 @@ void RF_init()
 
   // Configure ports -- switch inputs, LEDs, GDO0 to RX packet info from CCxxxx
   
+#if 0
   TI_CC_SW_PxREN |= TI_CC_SW1;               // Enable Pull up resistor
   TI_CC_SW_PxOUT |= TI_CC_SW1;               // Enable pull up resistor
   TI_CC_SW_PxIES |= TI_CC_SW1;               // Int on falling edge
@@ -469,6 +471,19 @@ void RF_init()
   TI_CC_SPIStrobe(TI_CCxxx0_SRX);           // Initialize CCxxxx in RX mode.
                                             // When a pkt is received, it will
                                             // signal on GDO0 and wake CPU
+#endif
+
+}
+
+void RF_check(void) {
+
+	char patable_check[9];
+	TI_CC_SPIReadBurstReg(TI_CCxxx0_PATABLE, patable_check, 9);
+	for (int i = 0; i < 9; i++) {
+		MY_DEBUG_VALUE("patable", patable_check[i]);
+	}
+	MY_DEBUG_VALUE("partnum", TI_CC_SPIReadStatus(TI_CCxxx0_PARTNUM));
+	MY_DEBUG_VALUE("version", TI_CC_SPIReadStatus(TI_CCxxx0_VERSION));
 
 }
 
@@ -524,6 +539,7 @@ void RFSendPacket(char *txBuffer, char size)
     
     TI_CC_SPIStrobe(TI_CCxxx0_STX); // Change state to TX, initiating data transfer
     
+#if 0
     while (!(TI_CC_GDO0_PxIN&TI_CC_GDO0_PIN)); // Wait GDO0 to go hi -> sync TX'ed
     while (TI_CC_GDO0_PxIN&TI_CC_GDO0_PIN); // Wait GDO0 to clear -> end of pkt
     
@@ -531,6 +547,7 @@ void RFSendPacket(char *txBuffer, char size)
     
     TI_CC_GDO0_PxIFG &= ~TI_CC_GDO0_PIN; // After pkt TX, this interrupt flag is set.
     // Has to be cleared before exiting
+#endif
 }
 
 
@@ -602,9 +619,11 @@ void Radio_GotoSleep()
 // Contributed by Cor
 void Radio_WakeUp()
 {
+#if 0
   TI_CC_CSn_PxOUT &= ~TI_CC_CSn_PIN;        // /CS low
   while (TI_CC_SPI_USCIB0_PxIN & TI_CC_SPI_USCIB0_SOMI); //wait till P1.6 goes low
   TI_CC_CSn_PxOUT |= TI_CC_CSn_PIN;         // /CS high
+#endif
 
   // write some test setting back;
   TI_CC_SPIWriteReg(TI_CCxxx0_TEST2, 0x88); // Various test settings.
