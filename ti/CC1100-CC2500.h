@@ -50,3 +50,4 @@ void Radio_GotoSleep();
 void Radio_WakeUp();
 
 void RF_check(void);
+void RF_test(void);

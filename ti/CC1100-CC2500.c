@@ -41,12 +41,12 @@
 //  IAR Embedded Workbench v3.41
 //------------------------------------------------------------------------------
 
-
+#include "CC1100-CC2500.h"
 #include "TI_CC_CC1100-CC2500.h"
 #include "TI_CC_spi.h"
 #include "my_debug.h"
 
-#define TI_CC_RF_FREQ  868                 // 315, 433, 868, 915, 2400
+#define TI_CC_RF_FREQ  433                // 315, 433, 868, 915, 2400
 
 
 
@@ -286,8 +286,8 @@ void writeRFSettings(void)
 //extern char paTable[] = {0x60};
 //extern char paTableLen = 1;
 
-extern char paTable[] = {0xC0, 0xC5, 0xCD, 0x86, 0x50, 0x37, 0x26, 0x1D, 0x17}; //+12,10,7,5,0,-6,-10,-15 Dbm default 10Dbm
-extern char paTableLen = 9;
+char paTable[] = {0xC0, 0xC5, 0xCD, 0x86, 0x50, 0x37, 0x26, 0x1D, 0x17}; //+12,10,7,5,0,-6,-10,-15 Dbm default 10Dbm
+char paTableLen = 9;
 
 #endif
 
@@ -468,10 +468,11 @@ void RF_init()
   TI_CC_GDO0_PxIFG &= ~TI_CC_GDO0_PIN;      // Clear flag
   TI_CC_GDO0_PxIE |= TI_CC_GDO0_PIN;        // Enable int on end of packet
 
-  TI_CC_SPIStrobe(TI_CCxxx0_SRX);           // Initialize CCxxxx in RX mode.
+#endif
+  //TI_CC_SPIStrobe(TI_CCxxx0_SRX);           // Initialize CCxxxx in RX mode.
                                             // When a pkt is received, it will
                                             // signal on GDO0 and wake CPU
-#endif
+
 
 }
 
@@ -485,6 +486,24 @@ void RF_check(void) {
 	MY_DEBUG_VALUE("partnum", TI_CC_SPIReadStatus(TI_CCxxx0_PARTNUM));
 	MY_DEBUG_VALUE("version", TI_CC_SPIReadStatus(TI_CCxxx0_VERSION));
 
+}
+
+void RF_test(void) {
+	char txBuffer[12];
+	txBuffer[0] = 11;                        // Packet length
+	txBuffer[1] = 0x01;                     // Packet address
+	txBuffer[2] = 0x00;
+	txBuffer[3] = 0x32;
+	txBuffer[4] = 0x33;
+	txBuffer[5] = 0x34;
+	txBuffer[6] = 0x35;
+	txBuffer[7] = 0x36;
+	txBuffer[8] = 0x37;
+	txBuffer[9] = 0x38;
+	txBuffer[10] = 0x39;
+	txBuffer[11] = 0x40;
+
+	RFSendPacket(txBuffer, 12);
 }
 
 void RF_change_Power(char power)
@@ -541,10 +560,12 @@ void RFSendPacket(char *txBuffer, char size)
     
 #if 0
     while (!(TI_CC_GDO0_PxIN&TI_CC_GDO0_PIN)); // Wait GDO0 to go hi -> sync TX'ed
-    while (TI_CC_GDO0_PxIN&TI_CC_GDO0_PIN); // Wait GDO0 to clear -> end of pkt
+    while (TI_CC_GDO0_PxIN&TI_CC_GDO0_PIN); // Wait GDO0 to clear -> end of pkt'
+#endif
     
-    TI_CC_SPIStrobe(TI_CCxxx0_SRX); // Change state to RX after sending
+    //TI_CC_SPIStrobe(TI_CCxxx0_SRX); // Change state to RX after sending
     
+#if 0
     TI_CC_GDO0_PxIFG &= ~TI_CC_GDO0_PIN; // After pkt TX, this interrupt flag is set.
     // Has to be cleared before exiting
 #endif
